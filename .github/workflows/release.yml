@@ -1,0 +1,42 @@
+# Production releases. Start with `make release` (or Actions › Release › Run workflow).
+# Ships everything on main since the last release: see scripts/release.sh.
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: patch, minor, major, or an exact version (X.Y.Z)
+        required: true
+        default: patch
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Build, sign and publish
+    runs-on: macos-26
+    # Signing secrets live in this environment, which only main can use.
+    environment: production
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0 # tags and full history: release notes and the build number
+      - name: Release
+        env:
+          BUMP: ${{ inputs.bump }}
+          GH_TOKEN: ${{ github.token }}
+          MURMUR_RELEASE_P12: ${{ secrets.MURMUR_RELEASE_P12 }}
+          MURMUR_RELEASE_P12_PASSWORD: ${{ secrets.MURMUR_RELEASE_P12_PASSWORD }}
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+        run: |
+          [ "$GITHUB_REF" = refs/heads/main ] || { echo "::error::Releases run from main"; exit 1; }
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          scripts/release.sh "$BUMP" --yes

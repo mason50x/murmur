@@ -1,0 +1,42 @@
+name: Bug report
+description: Something isn't working
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: input
+    id: murmur
+    attributes:
+      label: Murmur version
+      description: Settings › Updates
+      placeholder: 1.0.0 (42)
+    validations:
+      required: true
+  - type: input
+    id: mac
+    attributes:
+      label: Mac and macOS version
+      placeholder: MacBook Air M2, 8 GB, macOS 26.1
+    validations:
+      required: true
+  - type: dropdown
+    id: model
+    attributes:
+      label: Speech model
+      options: [Parakeet Unified, Phonon-2, Not sure]
+  - type: input
+    id: app
+    attributes:
+      label: App you were dictating into
+      placeholder: Notes, Slack, Terminal…
+  - type: textarea
+    id: log
+    attributes:
+      label: Log
+      description: Recent lines from ~/Library/Logs/Murmur.log. It records events and character counts, never what you said.
+      render: text
