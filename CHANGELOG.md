@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.0 — 2026-10-14
+
+- Mute other audio while dictating
+
 ## 1.0.1 — 2026-10-11
 
 First public release.
