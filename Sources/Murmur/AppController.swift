@@ -52,6 +52,7 @@ final class AppController {
     @ObservationIgnored private var loadTask: Task<Void, Never>?
     @ObservationIgnored private var revealTask: Task<Void, Never>?
     @ObservationIgnored private var collapseTask: Task<Void, Never>?
+    @ObservationIgnored private var muteTask: Task<Void, Never>?
     @ObservationIgnored private var axPoll: Timer?
     @ObservationIgnored private var levelBucket: Float = 0
     @ObservationIgnored private var levelBucketStart = Date()
@@ -60,6 +61,11 @@ final class AppController {
     var sounds: Bool {
         get { UserDefaults.standard.object(forKey: "sounds") as? Bool ?? true }
         set { UserDefaults.standard.set(newValue, forKey: "sounds") }
+    }
+
+    /// Mute the Mac's sound output while dictating.
+    var muteWhileDictating: Bool {
+        UserDefaults.standard.object(forKey: "muteWhileDictating") as? Bool ?? true
     }
 
     var micUID: String? {
@@ -88,6 +94,7 @@ final class AppController {
         ) { [weak self] in self?.pasteLast() }
 
         if !Self.keepLastRecording { Self.deleteLastRecording() }
+        OutputMute.release()  // in case the last run quit mid-dictation
         if !Permissions.accessibility {
             if !firstRun { Permissions.promptAccessibility() }
             // Global key monitors only start delivering once trusted; reinstall when that happens.
@@ -237,11 +244,30 @@ final class AppController {
     private func reveal() {
         guard isRecording, !showRecording else { return }
         showRecording = true
+        muteOutput()
+    }
+
+    /// Mutes once the notch is up, so ⌥-shortcuts never blip the sound. Waits out the open
+    /// sound first, which muting would cut off.
+    private func muteOutput() {
+        guard muteWhileDictating else { return }
+        let delay = sounds ? 200 : 0
+        muteTask = Task { [weak self] in
+            try? await Task.sleep(for: .milliseconds(delay))
+            guard let self, !Task.isCancelled, self.isRecording else { return }
+            OutputMute.engage()
+        }
+    }
+
+    private func unmuteOutput() {
+        muteTask?.cancel()
+        OutputMute.release()
     }
 
     func stopRecording() {
         guard isRecording else { return }
         revealTask?.cancel()
+        unmuteOutput()
         let samples = recorder.stop()
         recordingEndedAt = Date()
         locked = false
@@ -285,6 +311,7 @@ final class AppController {
     func cancelRecording() {
         guard isRecording else { return }
         revealTask?.cancel()
+        unmuteOutput()
         _ = recorder.stop()
         locked = false
         discardSession()

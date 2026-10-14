@@ -71,6 +71,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         observeUpdates()
     }
 
+    func applicationWillTerminate(_ notification: Notification) {
+        OutputMute.release()
+    }
+
     /// Opening Murmur again while it's running (Finder, Spotlight) shows Settings.
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         if !flag { Windows.isOnboarded ? windows.showSettings() : windows.showOnboarding() }

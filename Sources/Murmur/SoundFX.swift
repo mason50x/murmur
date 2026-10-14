@@ -170,51 +170,30 @@ private enum FixedLevel {
 
     /// nil when the output is muted.
     static func playbackVolume() -> Float? {
-        guard let device = defaultOutputDevice() else { return 0.2 }
+        guard let device = OutputDevice.current() else { return 0.2 }
         if isMuted(device) { return nil }
         let deviceDB = volumeDecibels(device) ?? virtualVolume(device).map { 40 * log10(max($0, 0.001)) }
         guard let deviceDB else { return 0.2 }
         return min(1, pow(10, (targetDecibels - deviceDB) / 20))
     }
 
-    private static func defaultOutputDevice() -> AudioDeviceID? {
-        var addr = AudioObjectPropertyAddress(
-            mSelector: kAudioHardwarePropertyDefaultOutputDevice, mScope: kAudioObjectPropertyScopeGlobal,
-            mElement: kAudioObjectPropertyElementMain)
-        var id = AudioDeviceID(0)
-        var size = UInt32(MemoryLayout<AudioDeviceID>.size)
-        let ok = AudioObjectGetPropertyData(AudioObjectID(kAudioObjectSystemObject), &addr, 0, nil, &size, &id)
-        return ok == noErr && id != 0 ? id : nil
-    }
-
     private static func isMuted(_ device: AudioDeviceID) -> Bool {
-        var muted: UInt32 = 0
-        return read(device, kAudioDevicePropertyMute, element: kAudioObjectPropertyElementMain, into: &muted) && muted != 0
+        let muted: UInt32? = OutputDevice.read(device, kAudioDevicePropertyMute)
+        return (muted ?? 0) != 0
     }
 
     /// Main (or loudest channel) attenuation in dB; 0 = full volume.
     private static func volumeDecibels(_ device: AudioDeviceID) -> Float? {
         for element in [kAudioObjectPropertyElementMain, 1, 2] {
-            var db: Float32 = 0
-            if read(device, kAudioDevicePropertyVolumeDecibels, element: element, into: &db) { return db }
+            if let db: Float32 = OutputDevice.read(device, kAudioDevicePropertyVolumeDecibels, element: element) {
+                return db
+            }
         }
         return nil
     }
 
     /// Fallback for devices without dB controls (e.g. some Bluetooth): the 0...1 slider value.
     private static func virtualVolume(_ device: AudioDeviceID) -> Float? {
-        var v: Float32 = 0
-        let selector = AudioObjectPropertySelector(0x766D_7663)  // 'vmvc' VirtualMainVolume
-        return read(device, selector, element: kAudioObjectPropertyElementMain, into: &v) ? v : nil
-    }
-
-    private static func read<T: BitwiseCopyable>(
-        _ device: AudioDeviceID, _ selector: AudioObjectPropertySelector, element: UInt32, into value: inout T
-    ) -> Bool {
-        var addr = AudioObjectPropertyAddress(
-            mSelector: selector, mScope: kAudioDevicePropertyScopeOutput, mElement: element)
-        guard AudioObjectHasProperty(device, &addr) else { return false }
-        var size = UInt32(MemoryLayout<T>.size)
-        return AudioObjectGetPropertyData(device, &addr, 0, nil, &size, &value) == noErr
+        OutputDevice.read(device, OutputDevice.virtualMainVolume)
     }
 }

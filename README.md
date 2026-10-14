@@ -101,7 +101,9 @@ rewriting a word: say "first… second… third…" and you get a numbered list,
 and you get paragraphs, and a "Hey Sam," opener or "Thanks, Mason" sign-off gets a line of its own.
 Say "new paragraph" or "new line" to break it yourself.
 
-The menu bar icon has recent transcripts, microphone selection, sounds, and Settings.
+While you dictate, Murmur mutes your Mac's sound so music and videos don't talk over you, and
+puts it back when you let go (turn this off in Settings). The menu bar icon has recent
+transcripts, microphone selection, sounds, and Settings.
 
 ## Speech models
 
@@ -192,6 +194,7 @@ Sources/Murmur/
   Transcriber.swift     Parakeet Unified / Phonon-2 via FluidAudio
   AudioRecorder.swift   AVAudioEngine capture → 16 kHz mono, levels, input devices
   HotkeyMonitor.swift   right-⌥ hold / double-tap / Esc
+  OutputMute.swift      mutes sound output while you dictate, restores it after
   TextInserter.swift    focus detection, clipboard-preserving paste
   SmartFormat.swift     casing, punctuation, and spacing from the text around the caret
   Layout.swift          paragraphs and lists from pauses and spoken ordinals

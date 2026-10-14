@@ -6,6 +6,7 @@ struct SettingsView: View {
     let windows: Windows
 
     @AppStorage("sounds") private var sounds = true
+    @AppStorage("muteWhileDictating") private var muteWhileDictating = true
     @AppStorage("micUID") private var micUID = ""
     @AppStorage("keepHistory") private var keepHistory = true
     @AppStorage("keepLastRecording") private var keepLastRecording = false
@@ -31,6 +32,7 @@ struct SettingsView: View {
                         Toggle("", isOn: $sounds).labelsHidden().toggleStyle(.switch)
                     }
                 }
+                Toggle("Mute other audio while dictating", isOn: $muteWhileDictating)
                 Toggle("Open at login", isOn: $openAtLogin)
                     .onChange(of: openAtLogin) { _, on in setLoginItem(on) }
             }
