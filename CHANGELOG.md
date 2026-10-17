@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.0 — 2026-10-17
+
+- Refresh the app icon with four bold waveform bars
+
 ## 1.1.0 — 2026-10-14
 
 - Mute other audio while dictating
