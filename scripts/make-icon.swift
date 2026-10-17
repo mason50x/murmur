@@ -1,4 +1,4 @@
-// Renders Resources/AppIcon.icns: a white waveform on a black squircle.
+// Renders Resources/AppIcon.icns: four thick white waveform bars on a black squircle.
 import AppKit
 
 let out = CommandLine.arguments[1]
@@ -17,11 +17,14 @@ func render(_ px: Int) -> Data {
     let rect = NSRect(x: inset, y: inset, width: s - 2 * inset, height: s - 2 * inset)
     let path = NSBezierPath(roundedRect: rect, xRadius: rect.width * 0.225, yRadius: rect.width * 0.225)
     NSGradient(colors: [NSColor(white: 0.16, alpha: 1), NSColor(white: 0.02, alpha: 1)])!.draw(in: path, angle: -90)
-    let config = NSImage.SymbolConfiguration(pointSize: s * 0.42, weight: .semibold)
-        .applying(.init(paletteColors: [.white]))
-    if let sym = NSImage(systemSymbolName: "waveform", accessibilityDescription: nil)?.withSymbolConfiguration(config) {
-        let sz = sym.size
-        sym.draw(in: NSRect(x: (s - sz.width) / 2, y: (s - sz.height) / 2, width: sz.width, height: sz.height))
+    let heights: [CGFloat] = [0.45, 1.0, 0.7, 0.4]
+    let bar = s * 0.09, gap = s * 0.055, tallest = s * 0.44
+    var x = (s - (bar * CGFloat(heights.count) + gap * CGFloat(heights.count - 1))) / 2
+    NSColor.white.setFill()
+    for h in heights {
+        let r = NSRect(x: x, y: (s - tallest * h) / 2, width: bar, height: tallest * h)
+        NSBezierPath(roundedRect: r, xRadius: bar / 2, yRadius: bar / 2).fill()
+        x += bar + gap
     }
     NSGraphicsContext.restoreGraphicsState()
     return rep.representation(using: .png, properties: [:])!
